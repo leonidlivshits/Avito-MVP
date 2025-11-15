@@ -1,0 +1,10 @@
+services:
+  app:
+    volumes:
+      - ./:/src:cached
+      - ./config/config.yaml:/etc/avito-mvp/config.yaml:ro
+      - ./internal/infra/db/migrations:/migrations:ro
+    environment:
+      - GO_ENV=development
+      - HOT_RELOAD=1
+    command: ["sh", "-c", "while sleep 2; do true; done"]

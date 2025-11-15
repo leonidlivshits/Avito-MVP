@@ -1,0 +1,6 @@
+app:
+  name: avito-mvp
+  port: 8080
+
+database:
+  max_connections: 20
