@@ -31,6 +31,8 @@ func Adapt(h AppHandler) http.HandlerFunc {
 				_ = WriteError(w, http.StatusConflict, dto.ErrorResponse{Error: dto.ErrorBody{Code: "NO_CANDIDATE", Message: err.Error()}})
 			case domain.ErrInvalidRequest:
 				_ = WriteError(w, http.StatusBadRequest, dto.ErrorResponse{Error: dto.ErrorBody{Code: "INVALID_REQUEST", Message: err.Error()}})
+			case domain.ErrUnauthorized:
+				_ = WriteError(w, http.StatusForbidden, dto.ErrorResponse{Error: dto.ErrorBody{Code: "UNAUTHORIZED", Message: err.Error()}})
 			default:
 				_ = WriteError(w, http.StatusInternalServerError, dto.ErrorResponse{Error: dto.ErrorBody{Code: "INTERNAL", Message: err.Error()}})
 			}

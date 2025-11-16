@@ -46,35 +46,21 @@ func NewApp(cfg *config.Config) (*App, error) {
 	statsUC := usecase.NewStatsUsecase(prRepo)
 
 	mux := http.NewServeMux()
-	httpapi.RegisterHandlers(mux, logger, teamUC, userUC, prUC, statsUC, cfg.AdminToken, cfg.UserToken)
+	httpapi.RegisterHandlers(mux, logger, teamUC, userUC, prUC, statsUC, cfg.AdminToken, cfg.UserToken, cfg.AuthorToken, cfg.ReviewerToken)
 
 	mux.HandleFunc("/openapi.yaml", func(w http.ResponseWriter, r *http.Request) {
-    http.ServeFile(w, r, "/app/openapi.yaml")
-	})
-
-
-	mux.HandleFunc("/docs", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		_, _ = w.Write([]byte(`<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8"/>
-    <title>API docs</title>
-  </head>
-  <body>
-    <redoc spec-url='/openapi.yaml'></redoc>
-    <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
-  </body>
-</html>`))
+	http.ServeFile(w, r, "/app/openapi.yaml")
 	})
 
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		_ = httpapi.WriteJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	})
 
+	handler := httpapi.LoggingMiddleware(logger)(mux)
+
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
-		Handler:      mux,
+		Handler:      handler,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
@@ -86,6 +72,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 		server: srv,
 	}, nil
 }
+
 
 func (a *App) Start(ctx context.Context) error {
 	a.logger.Info("starting server", "addr", a.server.Addr)

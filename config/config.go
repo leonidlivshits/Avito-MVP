@@ -8,26 +8,31 @@ import (
 )
 
 type Config struct {
-	Port         string
-	DatabaseURL  string
-	AdminToken   string
-	UserToken    string
-	LogLevel     string
-	MaxDBConns   int
+	Port          string
+	DatabaseURL   string
+	AdminToken    string
+	UserToken     string
+	AuthorToken   string
+	ReviewerToken string
+	LogLevel      string
+	MaxDBConns    int
 	MigrationsDir string
+	Env           string
 }
-
 
 func Load() (*Config, error) {
 	_ = godotenv.Load()
 
 	c := &Config{
-		Port:         getEnv("PORT", "8080"),
-		DatabaseURL:  getEnv("DATABASE_URL", "postgres://postgres:password@db:5432/avito_mvp?sslmode=disable"),
-		AdminToken:   getEnv("ADMIN_TOKEN", ""),
-		UserToken:    getEnv("USER_TOKEN", ""),
-		LogLevel:     getEnv("LOG_LEVEL", "info"),
+		Port:          getEnv("PORT", "8080"),
+		DatabaseURL:   getEnv("DATABASE_URL", "postgres://postgres:password@db:5432/avito_mvp?sslmode=disable"),
+		AdminToken:    getEnv("ADMIN_TOKEN", ""),
+		UserToken:     getEnv("USER_TOKEN", ""),
+		AuthorToken:   getEnv("AUTHOR_TOKEN", ""),
+		ReviewerToken: getEnv("REVIEWER_TOKEN", ""),
+		LogLevel:      getEnv("LOG_LEVEL", "info"),
 		MigrationsDir: getEnv("MIGRATIONS_DIR", "/migrations"),
+		Env:           getEnv("ENV", "dev"),
 	}
 
 	if v := getEnv("MAX_DB_CONNS", "20"); v != "" {

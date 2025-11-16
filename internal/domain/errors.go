@@ -9,4 +9,5 @@ var (
 	ErrNotAssigned    = errors.New("not assigned")
 	ErrNoCandidate    = errors.New("no candidate available")
 	ErrInvalidRequest = errors.New("invalid request")
+	ErrUnauthorized   = errors.New("unauthorized")
 )

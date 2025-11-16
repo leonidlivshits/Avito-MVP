@@ -72,8 +72,14 @@ func (h *UsersHandler) GetReview(w http.ResponseWriter, r *http.Request) error {
 	}
 	return WriteJSON(w, http.StatusOK, resp)
 }
+	
 
 func (h *UsersHandler) BulkDeactivate(w http.ResponseWriter, r *http.Request) error {
+	role := GetRole(r.Context())
+	if role != domain.RoleAdmin {
+		return domain.ErrUnauthorized
+	}
+
 	var in dto.BulkDeactivateRequest
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
 		return domain.ErrInvalidRequest
