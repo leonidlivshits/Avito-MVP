@@ -16,6 +16,7 @@ COPY --from=builder /app/server /usr/local/bin/server
 
 COPY --from=builder /src/config/config.yaml /etc/avito-mvp/config.yaml
 COPY --from=builder /src/internal/infra/db/migrations /migrations
+COPY openapi.yaml /app/openapi.yaml
 
 EXPOSE 8080
 
