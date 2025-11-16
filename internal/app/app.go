@@ -8,13 +8,15 @@ import (
 
 	"github.com/leonidlivshits/Avito-MVP/config"
 	"github.com/leonidlivshits/Avito-MVP/internal/log"
-	"github.com/leonidlivshits/Avito-MVP/internal/infra/db"
+	"github.com/leonidlivshits/Avito-MVP/internal/observability"
 	pgres "github.com/leonidlivshits/Avito-MVP/internal/infra/postgres"
+	"github.com/leonidlivshits/Avito-MVP/internal/infra/db"
 	"github.com/leonidlivshits/Avito-MVP/internal/domain/service"
 	"github.com/leonidlivshits/Avito-MVP/internal/usecase"
 	httpapi "github.com/leonidlivshits/Avito-MVP/internal/api/http"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type App struct {
@@ -46,17 +48,23 @@ func NewApp(cfg *config.Config) (*App, error) {
 	statsUC := usecase.NewStatsUsecase(prRepo)
 
 	mux := http.NewServeMux()
-	httpapi.RegisterHandlers(mux, logger, teamUC, userUC, prUC, statsUC, cfg.AdminToken, cfg.UserToken, cfg.AuthorToken, cfg.ReviewerToken)
+
+	httpapi.RegisterHandlers(mux, logger, teamUC, userUC, prUC, statsUC,
+		cfg.AdminToken, cfg.UserToken, cfg.AuthorToken, cfg.ReviewerToken)
 
 	mux.HandleFunc("/openapi.yaml", func(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "/app/openapi.yaml")
+		http.ServeFile(w, r, "/app/openapi.yaml")
 	})
 
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		_ = httpapi.WriteJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	})
 
-	handler := httpapi.LoggingMiddleware(logger)(mux)
+	observability.RegisterCollectors()
+	mux.Handle("/metrics", promhttp.Handler())
+	muxWithMetrics := observability.InstrumentMiddleware(mux)
+
+	handler := httpapi.LoggingMiddleware(logger)(muxWithMetrics)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
@@ -65,6 +73,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
+
 	return &App{
 		cfg:    cfg,
 		logger: logger,
@@ -72,7 +81,6 @@ func NewApp(cfg *config.Config) (*App, error) {
 		server: srv,
 	}, nil
 }
-
 
 func (a *App) Start(ctx context.Context) error {
 	a.logger.Info("starting server", "addr", a.server.Addr)
