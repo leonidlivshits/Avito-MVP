@@ -14,13 +14,15 @@ func TestPRUsecase_CreateReassignMerge(t *testing.T) {
 	prRepo := inmemory.NewInMemoryPRRepo()
 	teamRepo := inmemory.NewInMemoryTeamRepo()
 
-	// prepare users
 	author := &model.User{UserID: "au", Username: "Author", TeamName: "teamA", Skill: model.SkillMiddle, IsActive: true}
 	r1 := &model.User{UserID: "r1", Username: "R1", TeamName: "teamA", Skill: model.SkillMiddle, IsActive: true}
 	r2 := &model.User{UserID: "r2", Username: "R2", TeamName: "teamA", Skill: model.SkillSenior, IsActive: true}
+	r3 := &model.User{UserID: "r3", Username: "R3", TeamName: "teamA", Skill: model.SkillMiddle, IsActive: true}
+
 	userRepo.Upsert(author)
 	userRepo.Upsert(r1)
 	userRepo.Upsert(r2)
+	userRepo.Upsert(r3)
 
 	assignSvc := service.NewAssignmentService(userRepo, prRepo)
 	prUC := usecase.NewPRUsecase(prRepo, userRepo, teamRepo, assignSvc)
