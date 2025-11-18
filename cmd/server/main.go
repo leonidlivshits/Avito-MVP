@@ -7,14 +7,26 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/leonidlivshits/Avito-MVP/internal/app"
 	"github.com/leonidlivshits/Avito-MVP/config"
+	"github.com/leonidlivshits/Avito-MVP/internal/app"
+	"github.com/leonidlivshits/Avito-MVP/internal/infra/db"
 )
 
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("config load: %v", err)
+	}
+
+	if cfg.MigrationsDir == "" {
+		log.Printf("MIGRATIONS_DIR is empty; skipping migrations")
+	} else {
+		log.Printf("running migrations from %s", cfg.MigrationsDir)
+
+		if err := db.RunMigrations(nil, cfg.MigrationsDir); err != nil {
+			log.Fatalf("migrations failed: %v", err)
+		}
+		log.Printf("migrations applied successfully")
 	}
 
 	a, err := app.NewApp(cfg)
@@ -33,6 +45,7 @@ func main() {
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+
 	if err := a.Shutdown(shutdownCtx); err != nil {
 		log.Fatalf("app shutdown: %v", err)
 	}
